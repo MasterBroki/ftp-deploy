@@ -111,7 +111,7 @@ function countFiles(filemap) {
         .length;
 }
 
-function deleteDir(ftp, dir) {
+function deleteDir(ftp, dir, whiteList = []) {
     return ftp.list(dir).then(lst => {
         let dirNames = lst
             .filter(f => f.type == "d" && f.name != ".." && f.name != ".")
@@ -123,9 +123,19 @@ function deleteDir(ftp, dir) {
 
         // delete sub-directories and then all files
         return Promise.mapSeries(dirNames, dirName => {
+            console.log(dirName);
+            console.log(whiteList);
+            if (whiteList.find(fileName => fileName == dirName)){
+                console.log("Skipping "+dirName);
+                return Promise.of(true);
+            }
             // deletes everything in sub-directory, and then itself
             return deleteDir(ftp, dirName).then(() => ftp.rmdir(dirName));
-        }).then(() => Promise.mapSeries(fnames, fname => ftp.delete(fname)));
+        }).then(() => Promise.mapSeries(fnames, fname => {
+            if (whiteList.find(fileName => fileName == fname))
+                return Promise.of(true);
+            ftp.delete(fname)
+        }));
     });
 }
 

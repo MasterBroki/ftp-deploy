@@ -2,6 +2,7 @@
 const path = require("path");
 
 const FtpDeploy = require("../src/ftp-deploy");
+const remote = "/Users/charles/PhpstormProjects/ftp-deploy/test/remote/ftp";
 
 const config = {
     user: "anonymous",
@@ -12,7 +13,11 @@ const config = {
     remoteRoot: "/f",
     deleteRemote: true,
     exclude: [],
-    include: ["test-inside-root.txt"]
+    include: ["test-inside-root.txt"],
+    whitelist: [
+        remote + "/hello.txt",
+        remote + "/testFolder"
+    ],
     // include: ["**/*", "*", ".*"]
 };
 

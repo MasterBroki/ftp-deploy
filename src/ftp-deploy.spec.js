@@ -10,17 +10,18 @@ const statP = utils.promisify(fs.stat);
 
 const del = require("delete");
 const FtpDeploy = require("./ftp-deploy");
-
+const remote = "/Users/charles/PhpstormProjects/ftp-deploy/test/remote/ftp";
 const config = {
-    user: "anonymous",
-    password: "anon", // Optional, prompted if none given
+    user: "",
+    password: "", // Optional, prompted if none given
     host: "localhost",
-    port: 2121,
+    port: 21,
     localRoot: path.join(__dirname, "../test/local"),
-    remoteRoot: "/ftp",
+    remoteRoot: remote,
     exclude: [],
     include: ["folderA/**/*", "test-inside-root.txt"],
-    debugMode: true
+    debugMode: true,
+    deleteRemote: false
 };
 
 describe("deploy tests", () => {
@@ -28,7 +29,7 @@ describe("deploy tests", () => {
 
     it("should fail if badly configured", () => {
         const d = new FtpDeploy();
-        const configError = Object.assign({}, config, { port: 212 });
+        const configError = Object.assign({}, config, {port: 212});
         return del(remoteDir)
             .then(() => {
                 return d.deploy(configError);
@@ -46,7 +47,7 @@ describe("deploy tests", () => {
         const d = new FtpDeploy();
         return del(remoteDir)
             .then(() => {
-                let c2 = Object.assign({}, config, { include: [] });
+                let c2 = Object.assign({}, config, {include: []});
                 return d.deploy(c2);
             })
             .catch(err => {
@@ -60,14 +61,31 @@ describe("deploy tests", () => {
     it("should put a file", () => {
         const d = new FtpDeploy();
         return del(remoteDir)
-            .then(() => {
-                return d.deploy(config);
-            })
+            .then(() => d.deploy(config))
             .then(() => {
                 // Should reject if file does not exist
-                return statP(remoteDir + "/test-inside-root.txt");
+                statP(remoteDir + "/test-inside-root.txt");
             })
-            .catch(err => done(err));
+            .catch(err => done(err))
+    });
+    it("should not delete whitelisted files", (done) => {
+        const d = new FtpDeploy();
+        del(remoteDir)
+            .then(() => {
+                fs.mkdirSync(remoteDir);
+                fs.mkdirSync(remoteDir + "/testFolder");
+                fs.writeFileSync(remoteDir + "/testFolder/hello.txt", "test folder!!!");
+                fs.writeFileSync(remoteDir + "/hello.txt", "test!!");
+                config.deleteRemote = true;
+                d.deploy(config).then(() => {
+                    // Should reject if file does not exist
+                    statP(remoteDir + "/hello.txt");
+                    statP(remoteDir + "/testFolder/hello.txt");
+                    done()
+                })
+                    .catch(err => done(err))
+
+            })
     });
     it("should put a dot file", () => {
         const d = new FtpDeploy();

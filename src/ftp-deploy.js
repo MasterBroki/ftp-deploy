@@ -113,7 +113,7 @@ const FtpDeployer = function() {
     this.deleteRemote = config => {
         if (config.deleteRemote) {
             return lib
-                .deleteDir(this.ftp, config.remoteRoot)
+                .deleteDir(this.ftp, config.remoteRoot, config.whitelist)
                 .then(() => {
                     this.emit("log", "Deleted directory: " + config.remoteRoot);
                     return config;
@@ -135,7 +135,7 @@ const FtpDeployer = function() {
             .checkIncludes(config)
             .then(lib.getPassword)
             .then(this.connect)
-            .then(this.deleteRemote)
+            .then(()=> this.deleteRemote(config))
             .then(this.checkLocalAndUpload)
             .then(res => {
                 this.ftp.end();
